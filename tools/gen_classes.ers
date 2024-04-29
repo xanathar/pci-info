@@ -1,0 +1,874 @@
+#!/usr/bin/env rust-script
+
+//! Generates the PCI device classes enumerations starting from
+//! the statically defined data itself contains.
+//!
+//! There are multiple reasons why this is, as of today, neither
+//! a procedural macro nor a build.rs step:
+//!     - the code generation is rarely touched and doing it at every
+//!       build would be redundant
+//!     - the cost of proc_macros and build.rs scripts are on every
+//!       single user, for an information that is statically provided
+//!     - the compile units can be easily checked before commit
+//!     - proc_macros need a second crate published on crates.io fo
+//!       no added benefit
+//!     - build.rs code generation creates source files in target/
+//!       that never work completely flawlessly with IDEs and rls
+//!
+//! Instructions:
+//!     - Install rust-script (https://rust-script.org/) if you
+//!       haven't (`cargo install rust-script`).
+//!     - Then just `tools/gen_classes.ers`, or double click the .ers
+//!       file on Windows (after creating file associations, see
+//!       rust-script documentation at https://rust-script.org/
+
+use std::collections::HashSet;
+use std::fs::File;
+use std::io::Write;
+use std::path::{Path, PathBuf};
+
+// -------------------------------------------------------------------
+// CLASSES DATA
+// -------------------------------------------------------------------
+
+fn pci_device_classes() -> Vec<Class> {
+    // List of all PCI classes, subclasses and programming interfaces.
+    // Ids must be monotonically increasing, for sanity checks to work.
+    vec![
+        Class {
+            name: "Unclassified",
+            id: 0,
+            subclasses: vec![
+                SubcWithVendor("Generic", 0),
+                SubcWithVendor("VgaCompatible", 1),
+            ],
+        },
+
+        Class {
+            name: "MassStorageController",
+            id: 1,
+            subclasses: vec![
+                SubcWithIfaces("Scsi", 0, vec![
+                    Iface("VendorSpecific", 0x0),
+                    Iface("StorageDevice", 0x11),
+                    Iface("HostBusAdapter", 0x12),
+                    Iface("StorageDeviceAndController", 0x13),
+                    Iface("StorageDeviceOverPciE", 0x21),
+                ]),
+                SubcWithIfaces("Ide", 1, vec![
+                    IfaceWildcard("AtaInterface"),
+                ]),
+                SubcWithVendor("FloppyDisk", 2),
+                SubcWithVendor("IpiBus", 3),
+                SubcWithVendor("Raid", 4),
+                SubcWithIfaces("AtaWithAdma", 0x5, vec![
+                    Iface("SingleStepping", 0x20),
+                    Iface("ContinuousOperation", 0x30),
+                ]),
+                SubcWithIfaces("SerialAta", 0x6, vec![
+                    Iface("VendorSpecific", 0),
+                    Iface("Ahci", 1),
+                    Iface("SerialStorageBus", 2),
+                ]),
+                SubcWithIfaces("SerialAttachedScsi", 0x7, vec![
+                    Iface("VendorSpecific", 0),
+                    Iface("Obsolete", 1),
+                ]),
+                SubcWithIfaces("NonVolatileMemory", 0x8, vec![
+                    Iface("VendorSpecific", 0),
+                    Iface("NvmHci", 1),
+                    Iface("NVMeIoController", 2),
+                    Iface("NVMeAdministrativeController", 3),
+                ]),
+                SubcWithIfaces("UniversalFlashStorage", 0x9, vec![
+                    Iface("VendorSpecific", 0),
+                    Iface("UfsHci", 1),
+                ]),
+                SubcWithVendor("Other", 0x80),
+            ],
+        },
+
+        Class {
+            name: "NetworkController",
+            id: 2,
+            subclasses: vec![
+                SubcWithDefault("Ethernet", 0),
+                SubcWithDefault("TokenRing", 1),
+                SubcWithDefault("Fddi", 2),
+                SubcWithDefault("Atm", 3),
+                SubcWithDefault("Isdn", 4),
+                SubcWithDefault("WorldFip", 5),
+                SubcWithIfaces("PicMg214MultiComputing", 6, vec![
+                    IfaceWildcard("PicMg"),
+                ]),
+                SubcWithDefault("InfiniBand", 7),
+                SubclassOther(),
+            ],
+        },
+
+        Class {
+            name: "DisplayController",
+            id: 3,
+            subclasses: vec![
+                SubcWithIfaces("VgaCompatible", 0, vec![
+                    Iface("Vga", 0),
+                    Iface("Ibm8514", 1),
+                ]),
+                SubcWithDefault("Xga", 1),
+                SubcWithVendor("NonVga3D", 2),
+                SubclassOther(),
+            ],
+        },
+
+        Class {
+            name: "MultimediaDevice",
+            id: 4,
+            subclasses: vec![
+                SubcWithVendor("VideoDevice", 0),
+                SubcWithVendor("AudioDevice", 1),
+                SubcWithVendor("ComputerTelephony", 2),
+                SubcWithIfaces("HdaCompatible", 3, vec![
+                    Iface("HighDefinitionAudio", 0),
+                    Iface("HighDefinitionAudioWithVendorExtension", 0x80),
+                ]),
+                SubclassOther(),
+            ],
+        },
+
+        Class {
+            name: "MemoryController",
+            id: 5,
+            subclasses: vec![
+                SubcWithDefault("Ram", 0),
+                SubcWithDefault("Flash", 1),
+                SubcWithIfaces("CxlMemory", 2, vec![
+                    Iface("VendorSpecific", 0),
+                    Iface("Cxl2Specifications", 0x10),
+                ]),
+                SubclassOther(),
+            ],
+        },
+
+        Class {
+            name: "Bridge",
+            id: 6,
+            subclasses: vec![
+                SubcWithDefault("HostBridge", 0),
+                SubcWithDefault("IsaBridge", 1),
+                SubcWithDefault("EisaBridge", 2),
+                SubcWithDefault("McaBridge", 3),
+                SubcWithIfaces("PciToPciBridge", 4, vec![
+                    Iface("PciToPci", 0),
+                    Iface("SubtractiveDecodePciToPci", 1),
+                ]),
+                SubcWithDefault("PcmciaBridge", 5),
+                SubcWithDefault("NuBusBridge", 6),
+                SubcWithDefault("CardBusBridge", 7),
+                SubcWithDefault("RacewayBridge", 8),
+                SubcWithIfaces("SemiTransparentPciToPciBridge", 9, vec![
+                    Iface("Primary", 0x40),
+                    Iface("Secondary", 0x80),
+                ]),
+                SubcWithDefault("InfiniBandtoPciHostBridge", 0xA),
+                SubcWithIfaces("AdvancedSwitchingToPciHostBridge", 0xB, vec![
+                    Iface("VendorSpecific", 0),
+                    Iface("AsiSigInterface", 1),
+                ]),
+                SubclassOther(),
+            ],
+        },
+
+        Class {
+            name: "CommunicationController",
+            id: 7,
+            subclasses: vec![
+                SubcWithIfaces("Serial", 0, vec![
+                    Iface("Uart8250", 0),
+                    Iface("Uart16450", 1),
+                    Iface("Uart16550", 2),
+                    Iface("Uart16650", 3),
+                    Iface("Uart16750", 4),
+                    Iface("Uart16850", 5),
+                    Iface("Uart16950", 6),
+                ]),
+                SubcWithIfaces("Parallel", 1, vec![
+                    Iface("ParallelPort", 0),
+                    Iface("BidirectionalParallelPort", 1),
+                    Iface("EcpParallelPort", 2),
+                    Iface("Ieee1284Controller", 3),
+                    Iface("Ieee1284TargetDevice", 0xFE),
+                ]),
+                SubcWithDefault("MultiportSerialController", 2),
+                SubcWithIfaces("Modem", 3, vec![
+                    Iface("Generic", 0),
+                    Iface("Hayes16450Compatible", 1),
+                    Iface("Hayes16550Compatible", 2),
+                    Iface("Hayes16650Compatible", 3),
+                    Iface("Hayes16750Compatible", 4),
+                ]),
+
+                SubcWithDefault("GpibController", 4),
+                SubcWithDefault("Smartcard", 5),
+                SubclassOther(),
+            ],
+        },
+
+        Class {
+            name: "BaseSystemPeripheral",
+            id: 8,
+            subclasses: vec![
+                SubcWithIfaces("PIC", 0, vec![
+                    Iface("Generic8259", 0),
+                    Iface("Isa", 1),
+                    Iface("Eisa", 2),
+                    Iface("IoApic", 0x10),
+                    Iface("IoXApic", 0x20),
+                ]),
+                SubcWithIfaces("DmaController", 1, vec![
+                    Iface("Generic8237", 0),
+                    Iface("Isa", 1),
+                    Iface("Eisa", 2),
+                ]),
+                SubcWithIfaces("SystemTimer", 2, vec![
+                    Iface("Generic8254", 0),
+                    Iface("Isa", 1),
+                    Iface("Eisa", 2),
+                    Iface("HighPerformanceEventTimer", 3),
+                ]),
+                SubcWithIfaces("RealTimeClockController", 3, vec![
+                    Iface("GenericRtc", 0),
+                    Iface("Isa", 1),
+                ]),
+                SubcWithDefault("GenericPciHotPlugController", 4),
+                SubcWithDefault("SdHostController", 5),
+                SubcWithDefault("IOMMU", 6),
+                SubcWithDefault("RootComplexEventCollector", 7),
+                SubclassOther(),
+            ],
+        },
+
+        Class {
+            name: "InputDevice",
+            id: 9,
+            subclasses: vec![
+                SubcWithDefault("KeyboardController", 0),
+                SubcWithDefault("DigitizerPenController", 1),
+                SubcWithDefault("MouseController", 2),
+                SubcWithDefault("ScannerController", 3),
+                SubcWithIfaces("GameportController", 4, vec![
+                    Iface("Generic", 0),
+                    Iface("LegacyGamePort", 0x10),
+                ]),
+                SubclassOther(),
+            ],
+        },
+
+        Class {
+            name: "DockingStation",
+            id: 0xA,
+            subclasses: vec![
+                SubcWithVendor("Generic", 0),
+                SubclassOther(),
+            ],
+        },
+
+        Class {
+            name: "Processor",
+            id: 0xB,
+            subclasses: vec![
+                SubcWithVendor("Intel386", 0),
+                SubcWithVendor("Intel486", 1),
+                SubcWithVendor("IntelPentium", 2),
+                SubcWithVendor("DecAlpha", 0x10),
+                SubcWithVendor("PowerPc", 0x20),
+                SubcWithVendor("Mips", 0x30),
+                SubcWithVendor("Coprocessor", 0x40),
+                SubclassOther(),
+            ],
+        },
+
+        Class {
+            name: "SerialBusController",
+            id: 0xC,
+            subclasses: vec![
+                SubcWithIfaces("Ieee1394", 0, vec![
+                    Iface("FireWire", 0),
+                    Iface("Ieee1394OpenHCI", 0x10),
+                ]),
+                SubcWithDefault("ACCESSbus", 1),
+                SubcWithDefault("SSA", 2),
+                SubcWithIfaces("USB", 3, vec![
+                    Iface("UhcsController", 0),
+                    Iface("OhcsController", 0x10),
+                    Iface("Usb2Ehci", 0x20),
+                    Iface("Usb3Xhci", 0x30),
+                    Iface("Usb4HostInterface", 0x40),
+                    Iface("UsbGeneric", 0x80),
+                    Iface("UsbDevice", 0xFE),
+                ]),
+                SubcWithDefault("FibreChannel", 4),
+                SubcWithDefault("SystemManagementBus", 5),
+                SubcWithDefault("InfiniBandDeprecated", 6),
+                SubcWithIfaces("Ipmi", 7, vec![
+                    Iface("Smic", 0),
+                    Iface("KeyboardControllerStyle", 1),
+                    Iface("BlockTransferInterface", 2),
+                ]),
+                SubcWithDefault("SERCOS", 8),
+                SubcWithDefault("CANbus", 9),
+                SubcWithDefault("MipiI3C", 0xA),
+                SubclassOther(),
+            ],
+        },
+
+        Class {
+            name: "WirelessController",
+            id: 0xD,
+            subclasses: vec![
+                SubcWithDefault("iRDA", 0),
+                SubcWithIfaces("Radio", 1, vec![
+                    Iface("ConsumerIR", 0),
+                    Iface("UWB", 0x10),
+                ]),
+                SubcWithDefault("RFController", 0x10),
+                SubcWithDefault("Bluetooth", 0x11),
+                SubcWithDefault("Broadband", 0x12),
+                SubcWithDefault("Wifi802_11A", 0x20),
+                SubcWithDefault("Wifi802_11B", 0x21),
+                SubcWithDefault("CellularController", 0x40),
+                SubcWithDefault("CellularControllerWithEthernet", 0x41),
+                SubclassOther(),
+            ],
+        },
+
+        Class {
+            name: "IntelligentIoController",
+            id: 0xE,
+            subclasses: vec![
+                SubcWithVendor("IntelligentIoController", 0),
+            ],
+        },
+
+        Class {
+            name: "SatelliteCommController",
+            id: 0xF,
+            subclasses: vec![
+                SubcWithVendor("Tv", 1),
+                SubcWithVendor("Audio", 2),
+                SubcWithVendor("Voice", 3),
+                SubcWithVendor("Data", 4),
+                SubclassOther(),
+            ],
+        },
+
+        Class {
+            name: "EncryptionController",
+            id: 0x10,
+            subclasses: vec![
+                SubcWithVendor("NetworkandComputingEncrpytionDecryption", 0),
+                SubcWithVendor("EntertainmentEncryptionDecryption", 0x10),
+                SubclassOther(),
+            ],
+        },
+
+        Class {
+            name: "SignalProcessingController",
+            id: 0x11,
+            subclasses: vec![
+                SubcWithVendor("DpIoModule", 0),
+                SubcWithVendor("PerformanceCounters", 0x1),
+                SubcWithVendor("CommunicationSynchronization", 0x10),
+                SubcWithVendor("ManagementCard", 0x20),
+                SubclassOther(),
+            ],
+        },
+
+        Class {
+            name: "ProcessingAccelerator",
+            id: 0x12,
+            subclasses: vec![
+                SubcWithVendor("VendorSpecific", 0),
+                SubcWithVendor("SniaSdxiController", 1),
+            ],
+        },
+
+        Class {
+            name: "NonEssentialInstrumentation",
+            id: 0x13,
+            subclasses: vec![
+                SubcWithVendor("VendorSpecific", 0),
+            ],
+        },
+    ]
+}
+
+// -------------------------------------------------------------------
+// FILE TEMPLATES
+// -------------------------------------------------------------------
+
+const CLASSES_TEMPLATE: &'static str = r###"
+// This file is AUTOGENERATED.
+// Modify `tools/gen_classes.ers` if changes are needed to
+// PCI device classes or the file format
+
+#[allow(non_camel_case_types)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "pci_class_debug_strings", derive(Debug))]
+/// Represent a PCI device class as an enumeration, for easier
+/// matching with known valid values.
+///
+/// See PCI documentation or <https://wiki.osdev.org/PCI#Class_Codes>
+/// for possible values.
+pub enum PciDeviceClass {
+    ${ENUM_MEMBERS}
+}
+
+impl PciDeviceClass {
+    /// Create a `PciDeviceClass` from the `u8` value that it
+    /// represents
+    pub fn from_code(class_code: u8) -> Self {
+        match class_code {
+            ${ENUM_CTOR}
+        }
+    }
+
+    /// Gets the `u8` value that this `PciDeviceClass` represents
+    pub fn as_code(&self) -> u8 {
+        match self {
+            ${ENUM_OUT}
+        }
+    }
+}
+
+impl From<u8> for PciDeviceClass {
+    fn from(value: u8) -> Self {
+        Self::from_code(value)
+    }
+}
+
+impl From<PciDeviceClass> for u8 {
+    fn from(value: PciDeviceClass) -> Self {
+        value.as_code()
+    }
+}
+
+#[cfg(not(feature = "pci_class_debug_strings"))]
+impl std::fmt::Debug for PciDeviceClass {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "(class:{})", self.as_code())
+    }
+}
+"###;
+
+const SUBCLASSES_TEMPLATE: &'static str = r###"
+// This file is AUTOGENERATED.
+// Modify `tools/gen_classes.ers` if changes are needed to
+// PCI device classes or the file format
+
+#[allow(non_camel_case_types)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "pci_subclass_debug_strings", derive(Debug))]
+/// Represent a PCI device subclass as an enumeration, for easier
+/// matching with known valid values.
+///
+/// See PCI documentation or <https://wiki.osdev.org/PCI#Class_Codes>
+/// for possible values.
+pub enum PciDeviceSubclass {
+    ${ENUM_MEMBERS}
+}
+
+impl PciDeviceSubclass {
+    /// Converts a combination of `class_code` and `subclass_code`
+    /// to a valid `PciDeviceSubclass` object.
+    pub fn from_codes(class_code: u8, subclass_code: u8) -> Self {
+        match (class_code, subclass_code) {
+            ${ENUM_CTOR}
+        }
+    }
+
+    /// Converts a `PciDeviceSubclass` object into the
+    /// `class_code` and `subclass_code` that it represents.
+    pub fn as_codes(&self) -> (u8, u8) {
+        match self {
+            ${ENUM_OUT}
+        }
+    }
+}
+
+impl From<PciDeviceSubclass> for u8 {
+    fn from(value: PciDeviceSubclass) -> Self {
+        value.as_codes().1
+    }
+}
+
+#[cfg(not(feature = "pci_subclass_debug_strings"))]
+impl std::fmt::Debug for PciDeviceSubclass {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let v = self.as_codes();
+        write!(f, "(clss:{:02X}h subc:{:02X}h)", v.0, v.1)
+    }
+}
+"###;
+
+const IFACES_TEMPLATE: &'static str = r###"
+// This file is AUTOGENERATED.
+// Modify `tools/gen_classes.ers` if changes are needed to
+// PCI device classes or the file format
+
+#[allow(non_camel_case_types)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "pci_interface_func_debug_strings", derive(Debug))]
+/// Represent a PCI interface function as an enumeration, for easier
+/// matching with known valid values.
+///
+/// See PCI documentation or <https://wiki.osdev.org/PCI#Class_Codes>
+/// for possible values.
+pub enum PciDeviceInterfaceFunc {
+    ${ENUM_MEMBERS}
+}
+
+impl PciDeviceInterfaceFunc {
+    /// Converts a combination of `class_code`, `subclass_code` and
+    /// `interface_func` to a valid `PciDeviceInterfaceFunc` object.
+    pub fn from_codes(class_code: u8, subclass_code: u8, interface_func: u8) -> Self {
+        match (class_code, subclass_code, interface_func) {
+            ${ENUM_CTOR}
+        }
+    }
+
+    /// Converts a `PciDeviceInterfaceFunc` object into the
+    /// `class_code`, `subclass_code` and `interface_func` that it represents.
+    pub fn as_codes(&self) -> (u8, u8, u8) {
+        match self {
+            ${ENUM_OUT}
+        }
+    }
+}
+
+impl From<PciDeviceInterfaceFunc> for u8 {
+    fn from(value: PciDeviceInterfaceFunc) -> Self {
+        value.as_codes().2
+    }
+}
+
+#[cfg(not(feature = "pci_interface_func_debug_strings"))]
+impl std::fmt::Debug for PciDeviceInterfaceFunc {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let v = self.as_codes();
+        write!(f, "(clss:{:02X}h subc:{:02X}h if:{:02X}h)", v.0, v.1, v.2)
+    }
+}
+
+"###;
+
+
+// -------------------------------------------------------------------
+// DSL definition
+// -------------------------------------------------------------------
+
+enum IfaceId {
+    Id(u8),
+    Any,
+}
+
+struct Class {
+    name: &'static str,
+    id: u8,
+    subclasses: Vec<Subclass>,
+}
+
+struct Subclass {
+    name: &'static str,
+    id: u8,
+    ifaces: Vec<Iface>,
+}
+
+#[allow(non_snake_case)]
+fn SubcWithDefault(name: &'static str, id: u8) -> Subclass {
+    Subclass {
+        name, id,
+        ifaces: vec![
+            Iface("Default", 0),
+        ],
+    }
+}
+
+#[allow(non_snake_case)]
+fn SubcWithIfaces(name: &'static str, id: u8, ifaces: Vec<Iface>) -> Subclass {
+    Subclass {
+        name, id, ifaces,
+    }
+}
+
+#[allow(non_snake_case)]
+fn SubcWithVendor(name: &'static str, id: u8) -> Subclass {
+    Subclass {
+        name, id,
+        ifaces: vec![
+            Iface("VendorSpecific", 0),
+        ],
+    }
+}
+
+struct Iface{
+    name: &'static str,
+    id: IfaceId,
+}
+
+#[allow(non_snake_case)]
+fn Iface(name: &'static str, id: u8) -> Iface {
+    Iface {
+        name,
+        id: IfaceId::Id(id),
+    }
+}
+
+#[allow(non_snake_case)]
+fn IfaceWildcard(name: &'static str) -> Iface {
+    Iface {
+        name,
+        id: IfaceId::Any,
+    }
+}
+
+#[allow(non_snake_case)]
+fn SubclassOther() -> Subclass {
+    SubcWithVendor("Other", 0x80)
+}
+
+
+impl Class {
+    fn sanity_check(&self) {
+        let mut last_id: i16 = -1;
+        let mut dupe_name_check = HashSet::new();
+
+        for subc in self.subclasses.iter() {
+            if subc.id as i16 <= last_id {
+                panic!("Subclass {}.{} has regressing id", self.name, subc.name);
+            }
+            if !dupe_name_check.insert(subc.name) {
+                panic!("Subclass {}.{} has duplicate name", self.name, subc.name);
+            }
+
+            last_id = subc.id as i16;
+            subc.sanity_check();
+        }
+    }
+}
+
+impl Subclass {
+    fn sanity_check(&self) {
+        let mut last_id: i16 = -1;
+        let mut dupe_name_check = HashSet::new();
+
+        for iface in self.ifaces.iter() {
+            if !dupe_name_check.insert(iface.name) {
+                panic!("Iface {}.{} has duplicate name", self.name, iface.name);
+            }
+
+            match iface.id {
+                IfaceId::Id(iface_id) => {
+                    if iface_id as i16 <= last_id {
+                        panic!("Iface {}.{} has regressing id", self.name, iface.name);
+                    }
+                    last_id = iface_id as i16;
+                }
+                IfaceId::Any if last_id == -1 => {
+                    last_id = 9999;
+                }
+                IfaceId::Any => panic!("Subclass {} has multiple wildcard ifaces", self.name),
+            }
+        }
+    }
+}
+
+
+// -------------------------------------------------------------------
+// Actual code generation
+// -------------------------------------------------------------------
+
+fn main() {
+    let mut last_id: i16 = -1;
+    let mut dupe_name_check = HashSet::new();
+
+    eprint!("Creating data...");
+    let classes = pci_device_classes();
+    eprintln!(" done.");
+
+    eprint!("Checking data consistency...");
+    for c in classes.iter() {
+        if !dupe_name_check.insert(c.name) {
+            panic!("Class {} has duplicate name", c.name);
+        }
+
+        if c.id as i16 <= last_id {
+            panic!("Class {} has regressing id", c.name);
+        }
+
+        c.sanity_check();
+
+        last_id = c.id as i16;
+    }
+    eprintln!(" done.");
+
+    let output_file = get_output_path("device_class.rs");
+    eprint!("Writing classes to '{output_file:?}'...");
+    let (classes_enum, classes_ctor, classes_out) = generate_classes_code(&classes);
+    write_template(CLASSES_TEMPLATE, &output_file, classes_enum, classes_ctor, classes_out);
+    eprintln!(" done.");
+
+    let output_file = get_output_path("device_subclass.rs");
+    eprint!("Writing subclasses to '{output_file:?}'...");
+    let (classes_enum, classes_ctor, classes_out) = generate_subclasses_code(&classes);
+    write_template(SUBCLASSES_TEMPLATE, &output_file, classes_enum, classes_ctor, classes_out);
+    eprintln!(" done.");
+
+    let output_file = get_output_path("device_interface_func.rs");
+    eprint!("Writing ifacefuncs to '{output_file:?}'...");
+    let (classes_enum, classes_ctor, classes_out) = generate_ifaces_code(&classes);
+    write_template(IFACES_TEMPLATE, &output_file, classes_enum, classes_ctor, classes_out);
+    eprintln!(" done.");
+}
+
+fn get_output_path(filename: &str) -> PathBuf {
+    let base_path = std::env::var("RUST_SCRIPT_BASE_PATH").expect("RUST_SCRIPT_BASE_PATH env var... rust-script bug?");
+    let mut p = PathBuf::from(base_path);
+    p.pop();
+    p.push("src");
+    p.push("pci_enums");
+    p.push(filename);
+
+    p.into()
+}
+
+fn write_template(template: &str, filepath: &Path, enum_items: Vec<String>, enum_ctor: Vec<String>, enum_out: Vec<String>) {
+    let mut w = File::create(filepath).unwrap_or_else(|e| panic!("can't open {filepath:?}: {e}"));
+
+    for line in template.split('\n') {
+        if let Some(idx) = line.find("${ENUM_MEMBERS}") {
+            let (tabs, _) = line.split_at(idx);
+            for s in &enum_items {
+                writeln!(w, "{tabs}{s}").unwrap();
+            }
+        } else if let Some(idx) = line.find("${ENUM_CTOR}") {
+            let (tabs, _) = line.split_at(idx);
+            for s in &enum_ctor {
+                writeln!(w, "{tabs}{s}").unwrap();
+            }
+        } else if let Some(idx) = line.find("${ENUM_OUT}") {
+            let (tabs, _) = line.split_at(idx);
+            for s in &enum_out {
+                writeln!(w, "{tabs}{s}").unwrap();
+            }
+        } else {
+            writeln!(&mut w, "{line}").unwrap();
+        }
+    }
+}
+
+fn generate_classes_code(classes: &[Class]) -> (Vec<String>, Vec<String>, Vec<String>) {
+    let mut classes_enum = Vec::new();
+    let mut classes_ctor = Vec::new();
+    let mut classes_out = Vec::new();
+
+    for c in classes.iter() {
+        let (name, id) = (c.name, c.id);
+        classes_enum.push(format!("/// Enumeration matching device class {id:02X}h."));
+        classes_enum.push(format!("{name},"));
+        classes_ctor.push(format!("0x{id:02x} => Self::{name},"));
+        classes_out.push(format!("Self::{name} => 0x{id:02x},"));
+    }
+
+    classes_enum.push(format!("/// Enumeration matching unknown device classes."));
+    classes_enum.push("Unknown(u8),".into());
+    classes_ctor.push("unk => Self::Unknown(unk),".into());
+    classes_out.push("Self::Unknown(unk) => *unk,".into());
+
+    (classes_enum, classes_ctor, classes_out)
+}
+
+fn generate_subclasses_code(classes: &[Class]) -> (Vec<String>, Vec<String>, Vec<String>) {
+    let mut classes_enum = Vec::new();
+    let mut classes_ctor = Vec::new();
+    let mut classes_out = Vec::new();
+
+    for c in classes.iter() {
+        let (class_name, class_id) = (c.name, c.id);
+
+        // gen subclasses items
+        for s in c.subclasses.iter() {
+            let (subc_name, subc_id) = (s.name, s.id);
+
+            classes_enum.push(format!("/// Enumeration matching device class {class_id:02X}h, subclass {subc_id:02X}h."));
+            classes_enum.push(format!("{class_name}_{subc_name},"));
+            classes_ctor.push(format!("(0x{class_id:02x}, 0x{subc_id:02x}) => Self::{class_name}_{subc_name},"));
+            classes_out.push(format!("Self::{class_name}_{subc_name} => (0x{class_id:02x}, 0x{subc_id:02x}),"));
+        }
+
+        classes_enum.push(format!("/// Enumeration matching unknown subclass values of device class {class_id:02X}h."));
+        classes_enum.push(format!("{class_name}_Unknown(u8),"));
+        classes_ctor.push(format!("(0x{class_id:02x}, unk_s) => Self::{class_name}_Unknown(unk_s),"));
+        classes_out.push(format!("Self::{class_name}_Unknown(unk) => (0x{class_id:02x}, *unk),"));
+    }
+
+    classes_enum.push(format!("/// Enumeration matching unknown combinations of device class / subclass."));
+    classes_enum.push("Unknown(u8, u8),".into());
+    classes_ctor.push("(unk_c, unk_s) => Self::Unknown(unk_c, unk_s),".into());
+    classes_out.push("Self::Unknown(unk_c, unk_s) => (*unk_c, *unk_s),".into());
+
+    (classes_enum, classes_ctor, classes_out)
+}
+
+fn generate_ifaces_code(classes: &[Class]) -> (Vec<String>, Vec<String>, Vec<String>) {
+    let mut classes_enum = Vec::new();
+    let mut classes_ctor = Vec::new();
+    let mut classes_out = Vec::new();
+
+    for c in classes.iter() {
+        let (class_name, class_id) = (c.name, c.id);
+
+        // gen subclasses items
+        for s in c.subclasses.iter() {
+            let (subc_name, subc_id) = (s.name, s.id);
+            let mut has_catch_all = false;
+
+            for i in s.ifaces.iter() {
+                let if_name = i.name;
+
+                if let IfaceId::Id(if_id) = i.id {
+                    classes_enum.push(format!("/// Enumeration matching device class {class_id:02X}h, subclass {subc_id:02X}h, interface function {if_id:02X}h."));
+                    classes_enum.push(format!("{class_name}_{subc_name}_{if_name},"));
+                    classes_ctor.push(format!("(0x{class_id:02x}, 0x{subc_id:02x}, 0x{if_id:02x}) => Self::{class_name}_{subc_name}_{if_name},"));
+                    classes_out.push(format!("Self::{class_name}_{subc_name}_{if_name} => (0x{class_id:02x}, 0x{subc_id:02x}, 0x{if_id:02x}),"));
+                } else {
+                    classes_enum.push(format!("/// Enumeration matching all interface functions of device class {class_id:02X}h, subclass {subc_id:02X}h."));
+                    classes_enum.push(format!("{class_name}_{subc_name}_{if_name}(u8),"));
+                    classes_ctor.push(format!("(0x{class_id:02x}, 0x{subc_id:02x}, if_code) => Self::{class_name}_{subc_name}_{if_name}(if_code),"));
+                    classes_out.push(format!("Self::{class_name}_{subc_name}_{if_name}(if_code) => (0x{class_id:02x}, 0x{subc_id:02x}, *if_code),"));
+                    has_catch_all = true;
+                    break;
+                };
+            }
+
+            if !has_catch_all {
+                classes_enum.push(format!("/// Enumeration matching unknown interface function values of device class {class_id:02X}h, subclass {subc_id:02X}h."));
+                classes_enum.push(format!("{class_name}_{subc_name}_Unknown(u8),"));
+                classes_ctor.push(format!("(0x{class_id:02x}, 0x{subc_id:02x}, unk_i) => Self::{class_name}_{subc_name}_Unknown(unk_i),"));
+                classes_out.push(format!("Self::{class_name}_{subc_name}_Unknown(unk_i) => (0x{class_id:02x}, 0x{subc_id:02x}, *unk_i),"));
+            }
+        }
+
+        classes_enum.push(format!("/// Enumeration matching unknown subclass values of device class {class_id:02X}h."));
+        classes_enum.push(format!("{class_name}_Unknown(u8, u8),"));
+        classes_ctor.push(format!("(0x{class_id:02x}, unk_s, unk_i) => Self::{class_name}_Unknown(unk_s, unk_i),"));
+        classes_out.push(format!("Self::{class_name}_Unknown(unk_s, unk_i) => (0x{class_id:02x}, *unk_s, *unk_i),"));
+    }
+
+    classes_enum.push(format!("/// Enumeration matching unknown combinations of device class / subclass / interface function."));
+    classes_enum.push("Unknown(u8, u8, u8),".into());
+    classes_ctor.push("(unk_c, unk_s, unk_i) => Self::Unknown(unk_c, unk_s, unk_i),".into());
+    classes_out.push("Self::Unknown(unk_c, unk_s, unk_i) => (*unk_c, *unk_s, *unk_i),".into());
+
+    (classes_enum, classes_ctor, classes_out)
+}
+
