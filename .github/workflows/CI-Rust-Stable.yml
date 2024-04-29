@@ -2,9 +2,9 @@ name: CI-Rust-Stable
 
 on:
   push:
-    branches: [ "wip/ci", "release/**" ]
+    branches: [ "main", "release/**" ]
   pull_request:
-    branches: [ "wip/ci", "release/**" ]
+    branches: [ "main", "release/**" ]
 
 env:
   CARGO_TERM_COLOR: always
