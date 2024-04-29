@@ -1,5 +1,7 @@
 # pci-info
 
+![CI](https://github.com/xanathar/pci-info/actions/workflows/CI-Rust-Stable.yml/badge.svg) ![Crates.io](https://img.shields.io/crates/v/pci-info) ![docs.rs](https://img.shields.io/docsrs/pci-info) ![Crates.io](https://img.shields.io/crates/d/pci-info) ![Crates.io](https://img.shields.io/crates/l/pci-info)
+
 The `pci-info` crate provides a simple API to enumerate PCI devices across "desktop" operating systems (Linux, Windows, MacOS, with more to be added), or to parse PCI headers from files or memory buffers.
 
 It supports parsing of PCI metadata and availability of the various fields (including possibly the entire standard PCI configuration space of a device); the level of support is subject to the capabilities of the enumerator in use.
