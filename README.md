@@ -44,6 +44,44 @@ pub fn main() {
 }
 ```
 
+Running this on my system prints:
+
+```
+[ 0000:00:00.0 vendor: 1022 device: 1630 revision: 00 class: 06 sub-class: 00 iface-func: 00 (Bridge_HostBridge_Default) subsys-vendor: 1D05 subsystem-device: 1111 os_irq: None os_driver: 'None']
+[ 0000:00:00.2 vendor: 1022 device: 1631 revision: 00 class: 08 sub-class: 06 iface-func: 00 (BaseSystemPeripheral_IOMMU_Default) subsys-vendor: 1D05 subsystem-device: 1111 os_irq: Some(255) os_driver: 'None']
+[ 0000:00:01.0 vendor: 1022 device: 1632 revision: 00 class: 06 sub-class: 00 iface-func: 00 (Bridge_HostBridge_Default) subsys-vendor: 0000 subsystem-device: 0000 os_irq: None os_driver: 'None']
+[ 0000:00:01.1 vendor: 1022 device: 1633 revision: 00 class: 06 sub-class: 04 iface-func: 00 (Bridge_PciToPciBridge_PciToPci) subsys-vendor: none subsystem-device: none os_irq: Some(30) os_driver: 'Some("pcieport")']
+[ 0000:00:01.2 vendor: 1022 device: 1634 revision: 00 class: 06 sub-class: 04 iface-func: 00 (Bridge_PciToPciBridge_PciToPci) subsys-vendor: none subsystem-device: none os_irq: Some(31) os_driver: 'Some("pcieport")']
+[ 0000:00:02.0 vendor: 1022 device: 1632 revision: 00 class: 06 sub-class: 00 iface-func: 00 (Bridge_HostBridge_Default) subsys-vendor: 0000 subsystem-device: 0000 os_irq: None os_driver: 'None']
+[ 0000:00:02.1 vendor: 1022 device: 1634 revision: 00 class: 06 sub-class: 04 iface-func: 00 (Bridge_PciToPciBridge_PciToPci) subsys-vendor: none subsystem-device: none os_irq: Some(32) os_driver: 'Some("pcieport")']
+[ 0000:00:02.2 vendor: 1022 device: 1634 revision: 00 class: 06 sub-class: 04 iface-func: 00 (Bridge_PciToPciBridge_PciToPci) subsys-vendor: none subsystem-device: none os_irq: Some(33) os_driver: 'Some("pcieport")']
+[ 0000:00:02.4 vendor: 1022 device: 1634 revision: 00 class: 06 sub-class: 04 iface-func: 00 (Bridge_PciToPciBridge_PciToPci) subsys-vendor: none subsystem-device: none os_irq: Some(34) os_driver: 'Some("pcieport")']
+[ 0000:00:08.0 vendor: 1022 device: 1632 revision: 00 class: 06 sub-class: 00 iface-func: 00 (Bridge_HostBridge_Default) subsys-vendor: 0000 subsystem-device: 0000 os_irq: None os_driver: 'None']
+[ 0000:00:08.1 vendor: 1022 device: 1635 revision: 00 class: 06 sub-class: 04 iface-func: 00 (Bridge_PciToPciBridge_PciToPci) subsys-vendor: none subsystem-device: none os_irq: Some(35) os_driver: 'Some("pcieport")']
+[ 0000:00:14.0 vendor: 1022 device: 790B revision: 51 class: 0C sub-class: 05 iface-func: 00 (SerialBusController_SystemManagementBus_Default) subsys-vendor: 1D05 subsystem-device: 1111 os_irq: None os_driver: 'Some("piix4_smbus")']
+[ 0000:00:14.3 vendor: 1022 device: 790E revision: 51 class: 06 sub-class: 01 iface-func: 00 (Bridge_IsaBridge_Default) subsys-vendor: 1D05 subsystem-device: 1111 os_irq: None os_driver: 'None']
+[ 0000:00:18.0 vendor: 1022 device: 166A revision: 00 class: 06 sub-class: 00 iface-func: 00 (Bridge_HostBridge_Default) subsys-vendor: 0000 subsystem-device: 0000 os_irq: None os_driver: 'None']
+[ 0000:00:18.1 vendor: 1022 device: 166B revision: 00 class: 06 sub-class: 00 iface-func: 00 (Bridge_HostBridge_Default) subsys-vendor: 0000 subsystem-device: 0000 os_irq: None os_driver: 'None']
+[ 0000:00:18.2 vendor: 1022 device: 166C revision: 00 class: 06 sub-class: 00 iface-func: 00 (Bridge_HostBridge_Default) subsys-vendor: 0000 subsystem-device: 0000 os_irq: None os_driver: 'None']
+[ 0000:00:18.3 vendor: 1022 device: 166D revision: 00 class: 06 sub-class: 00 iface-func: 00 (Bridge_HostBridge_Default) subsys-vendor: 0000 subsystem-device: 0000 os_irq: None os_driver: 'Some("k10temp")']
+[ 0000:00:18.4 vendor: 1022 device: 166E revision: 00 class: 06 sub-class: 00 iface-func: 00 (Bridge_HostBridge_Default) subsys-vendor: 0000 subsystem-device: 0000 os_irq: None os_driver: 'None']
+[ 0000:00:18.5 vendor: 1022 device: 166F revision: 00 class: 06 sub-class: 00 iface-func: 00 (Bridge_HostBridge_Default) subsys-vendor: 0000 subsystem-device: 0000 os_irq: None os_driver: 'None']
+[ 0000:00:18.6 vendor: 1022 device: 1670 revision: 00 class: 06 sub-class: 00 iface-func: 00 (Bridge_HostBridge_Default) subsys-vendor: 0000 subsystem-device: 0000 os_irq: None os_driver: 'None']
+[ 0000:00:18.7 vendor: 1022 device: 1671 revision: 00 class: 06 sub-class: 00 iface-func: 00 (Bridge_HostBridge_Default) subsys-vendor: 0000 subsystem-device: 0000 os_irq: None os_driver: 'None']
+[ 0000:01:00.0 vendor: 10DE device: 249D revision: A1 class: 03 sub-class: 00 iface-func: 00 (DisplayController_VgaCompatible_Vga) subsys-vendor: 1D05 subsystem-device: 1113 os_irq: Some(100) os_driver: 'Some("nvidia")']
+[ 0000:01:00.1 vendor: 10DE device: 228B revision: A1 class: 04 sub-class: 03 iface-func: 00 (MultimediaDevice_HdaCompatible_HighDefinitionAudio) subsys-vendor: 1D05 subsystem-device: 1113 os_irq: Some(97) os_driver: 'Some("snd_hda_intel")']
+[ 0000:02:00.0 vendor: 10EC device: 8125 revision: 05 class: 02 sub-class: 00 iface-func: 00 (NetworkController_Ethernet_Default) subsys-vendor: 1D05 subsystem-device: 1113 os_irq: Some(61) os_driver: 'Some("r8169")']
+[ 0000:03:00.0 vendor: 1987 device: 5012 revision: 01 class: 01 sub-class: 08 iface-func: 02 (MassStorageController_NonVolatileMemory_NVMeIoController) subsys-vendor: 1987 subsystem-device: 5012 os_irq: Some(55) os_driver: 'Some("nvme")']
+[ 0000:04:00.0 vendor: 8086 device: 2723 revision: 1A class: 02 sub-class: 80 iface-func: 00 (NetworkController_Other_VendorSpecific) subsys-vendor: 8086 subsystem-device: 0084 os_irq: Some(80) os_driver: 'Some("iwlwifi")']
+[ 0000:05:00.0 vendor: 1987 device: 5012 revision: 01 class: 01 sub-class: 08 iface-func: 02 (MassStorageController_NonVolatileMemory_NVMeIoController) subsys-vendor: 1987 subsystem-device: 5012 os_irq: Some(58) os_driver: 'Some("nvme")']
+[ 0000:06:00.0 vendor: 1002 device: 1638 revision: C4 class: 03 sub-class: 00 iface-func: 00 (DisplayController_VgaCompatible_Vga) subsys-vendor: 1D05 subsystem-device: 1111 os_irq: Some(45) os_driver: 'Some("amdgpu")']
+[ 0000:06:00.2 vendor: 1022 device: 15DF revision: 00 class: 10 sub-class: 80 iface-func: 00 (EncryptionController_Other_VendorSpecific) subsys-vendor: 1D05 subsystem-device: 1111 os_irq: Some(55) os_driver: 'Some("ccp")']
+[ 0000:06:00.3 vendor: 1022 device: 1639 revision: 00 class: 0C sub-class: 03 iface-func: 30 (SerialBusController_USB_Usb3Xhci) subsys-vendor: 1D05 subsystem-device: 1111 os_irq: Some(36) os_driver: 'Some("xhci_hcd")']
+[ 0000:06:00.4 vendor: 1022 device: 1639 revision: 00 class: 0C sub-class: 03 iface-func: 30 (SerialBusController_USB_Usb3Xhci) subsys-vendor: 1D05 subsystem-device: 1111 os_irq: Some(45) os_driver: 'Some("xhci_hcd")']
+[ 0000:06:00.5 vendor: 1022 device: 15E2 revision: 01 class: 04 sub-class: 80 iface-func: 00 (MultimediaDevice_Other_VendorSpecific) subsys-vendor: 1D05 subsystem-device: 1111 os_irq: Some(80) os_driver: 'None']
+[ 0000:06:00.6 vendor: 1022 device: 15E3 revision: 00 class: 04 sub-class: 03 iface-func: 00 (MultimediaDevice_HdaCompatible_HighDefinitionAudio) subsys-vendor: 1D05 subsystem-device: 1111 os_irq: Some(98) os_driver: 'Some("snd_hda_intel")']
+```
+
 ## Using a custom enumerator
 
 If so desired, a custom enumerator can be used, using the
