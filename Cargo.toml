@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2021"
 rust-version = "1.70"
 license = "MIT OR Apache-2.0"
-description = ""
 repository = "https://github.com/xanathar/pci-info"
 readme = "README.md"
 keywords = ['pci', 'device', 'hardware']
 categories = ["hardware-support", "os"]
 authors = ["Marco Mastropaolo <marco@mastropaolo.com>"]
+description = "A crate to enumerate PCI devices on desktop operating systems and/or parse PCI configuration headers"
 
 [dependencies]
 
