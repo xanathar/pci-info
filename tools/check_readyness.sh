@@ -11,10 +11,13 @@ TARGETS=( \
 'x86_64-pc-windows-gnu' \
 'x86_64-unknown-linux-gnu' \
 'x86_64-unknown-linux-musl' \
+'x86_64-unknown-freebsd' \
 'aarch64-apple-darwin' \
 'aarch64-unknown-linux-gnu' \
 'i686-pc-windows-gnu' \
 'i686-unknown-linux-gnu' \
+'i686-unknown-linux-gnu' \
+'i686-unknown-freebsd' \
 )
 
 export RUSTFLAGS="-D warnings"

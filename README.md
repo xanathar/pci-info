@@ -147,6 +147,7 @@ Properties provided for PCI devices varies among enumerators.
 
 Enumerator                                     | Platforms | PCI id | PCI location | Revision | Device class | PCI subsystem | Assigned IRQ | OS driver
 ---------------------------------------------- | --------- | ------ | ------------ | -------- | ------------ | ----------------- | ------------ | ----------
+FreeBsdDevPciEnumerator                        | FreeBSD | ✅ | ✅             | ✅ | ✅ | ✅ | ❌ | ✅
 LinuxProcFsPciEnumerator(Fastest)              | Linux   | ✅ | ✅<sup>2</sup> | ❌ | ❌ | ❌ | ✅ | ✅
 LinuxProcFsPciEnumerator(HeadersOnly)          | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ✅ | ❌ | ❌
 LinuxProcFsPciEnumerator(SkipNoncommonHeaders) | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ❌ | ✅ | ✅
@@ -174,4 +175,7 @@ Crate feature | Default | Description
 
 ### 0.1.0
 First version published with basic enumerators for Linux, Windows and MacOS.
+
+### Not yet released
+- Added PCI enumerator for FreeBSD
 

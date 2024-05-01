@@ -6,6 +6,7 @@
 //!
 //! Enumerator                                     | Platforms | PCI id | PCI location | Revision | Device class | PCI subsystem | Assigned IRQ | OS driver
 //! ---------------------------------------------- | --------- | ------ | ------------ | -------- | ------------ | ----------------- | ------------ | ----------
+//! [`FreeBsdDevPciEnumerator`]                        | FreeBSD | ✅ | ✅             | ✅ | ✅ | ✅ | ❌ | ✅
 //! [`LinuxProcFsPciEnumerator::Fastest`]              | Linux   | ✅ | ✅<sup>2</sup> | ❌ | ❌ | ❌ | ✅ | ✅
 //! [`LinuxProcFsPciEnumerator::HeadersOnly`]          | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ✅ | ❌ | ❌
 //! [`LinuxProcFsPciEnumerator::SkipNoncommonHeaders`] | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ❌ | ✅ | ✅
@@ -36,6 +37,11 @@ mod linux;
 #[cfg(any(doc, target_os = "linux"))]
 pub use linux::*;
 
+#[cfg(any(doc, target_os = "freebsd"))]
+mod freebsd;
+#[cfg(any(doc, target_os = "freebsd"))]
+pub use freebsd::*;
+
 /// A trait that is implemented by all types able to enumerate PCI
 /// devices.
 pub trait PciEnumerator {
@@ -52,10 +58,18 @@ pub fn default_pci_enumerator() -> Result<impl PciEnumerator, PciInfoError> {
     #[cfg(target_os = "macos")]
     return Ok(MacOsIoKitPciEnumerator);
 
+    #[cfg(target_os = "freebsd")]
+    return Ok(FreeBsdDevPciEnumerator);
+
     #[cfg(target_os = "linux")]
     return Ok(LinuxProcFsPciEnumerator::Exhaustive);
 
-    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+    #[cfg(not(any(
+        target_os = "macos",
+        target_os = "linux",
+        target_os = "windows",
+        target_os = "freebsd"
+    )))]
     Err::<InvalidPciEnumerator, PciInfoError>(PciInfoError::NoDefaultPciEnumeratorForPlatform)
 }
 
