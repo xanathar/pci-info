@@ -11,6 +11,10 @@ pub enum PciInfoError {
     /// proper implementation for a default enumerator (yet).
     NoDefaultPciEnumeratorForPlatform,
 
+    /// The enumeration has been interrupted by an otherwise non
+    /// specified error.
+    EnumerationInterrupted(PciInfoErrorString),
+
     /// An error occurred parsing data. For example it may trigger if
     /// an invalid string like "hello" was found where an hexadecimal
     /// number was expected. The [`PciInfoErrorString`] contained in the
@@ -67,6 +71,10 @@ pub enum PciInfoError {
     /// Parsing of an unknown PCI specialized header type has been
     /// attempted.
     UnknownPciHeaderType(u8),
+
+    /// The enumeration has been retried because the device list changed
+    /// and the maximum number of iterations has been exceeded.
+    DevicesChangedTooManyTimes,
 }
 
 impl Display for PciInfoError {
@@ -97,6 +105,10 @@ impl Display for PciInfoError {
                 write!(f, "this platform does not support a default PCI enumerator")
             }
             UnknownPciHeaderType(h) => write!(f, "unknown PCI header type 0x{h:02X}"),
+            EnumerationInterrupted(e) => write!(f, "the enumeration has been interrupted: {e}"),
+            DevicesChangedTooManyTimes => {
+                write!(f, "the list of PCI devices changed too many times")
+            }
         }
     }
 }
