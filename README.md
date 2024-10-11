@@ -173,6 +173,12 @@ Crate feature | Default | Description
 
 # Change log
 
+### 0.2.1
+Fixed a few minor warnings and clippys.
+
+### 0.2.0
+Added support for FreeBSD.
+
 ### 0.1.0
 First version published with basic enumerators for Linux, Windows and MacOS.
 
