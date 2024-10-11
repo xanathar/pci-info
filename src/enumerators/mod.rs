@@ -73,6 +73,7 @@ pub fn default_pci_enumerator() -> Result<impl PciEnumerator, PciInfoError> {
     Err::<InvalidPciEnumerator, PciInfoError>(PciInfoError::NoDefaultPciEnumeratorForPlatform)
 }
 
+#[allow(dead_code)]
 struct InvalidPciEnumerator;
 impl PciEnumerator for InvalidPciEnumerator {
     fn enumerate_pci(self) -> Result<PciInfo, PciInfoError> {
