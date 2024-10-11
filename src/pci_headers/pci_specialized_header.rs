@@ -32,7 +32,7 @@ impl PciSpecializedHeader {
     /// Reads the data of the sub-header from a memory buffer.
     /// - `bytes` : specifies the slice containing the data to be read
     /// - `includes_common_header` : true if the slice starts at the beginning
-    /// of the common header, false if the slice contains only the sub-header data
+    ///   of the common header, false if the slice contains only the sub-header data
     pub fn read_subheader(
         header_type: u8,
         bytes: &[u8],

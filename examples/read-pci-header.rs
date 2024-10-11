@@ -10,10 +10,10 @@ use pci_info::{pci_headers::*, PciDevice};
 
 pub fn main() {
     // Read the PCI common-header
-    let common_header = PciCommonHeader::with_bytes(&PCI_HEADER_BYTES).unwrap();
+    let common_header = PciCommonHeader::with_bytes(PCI_HEADER_BYTES).unwrap();
     // Read the rest of the header
     let specialized_header =
-        PciSpecializedHeader::read_subheader(common_header.header_type, &PCI_HEADER_BYTES, true)
+        PciSpecializedHeader::read_subheader(common_header.header_type, PCI_HEADER_BYTES, true)
             .unwrap();
 
     println!("Common header: {common_header:?}");

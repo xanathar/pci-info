@@ -115,7 +115,7 @@ mod tests {
 
     #[test]
     fn pciinfoerrorstring_string() {
-        let errs: PciInfoErrorString = format!("test").into();
+        let errs: PciInfoErrorString = "test".to_string().into();
 
         let s: String = errs.to_string();
         assert_eq!(s, "test");
