@@ -4,7 +4,7 @@ use std::{ffi::CStr, fs::File, io, os::fd::AsRawFd};
 
 use crate::{
     pci_device::PciDeviceProperties, pci_property_result::PropertyResult, PciDevice,
-    PciDeviceEnumerationError, PciDeviceEnumerationErrorImpact, PciEnumerator, PciInfo,
+    PciDeviceEnumerationError, PciDeviceEnumerationErrorImpact, PciInfo,
     PciInfoError, PciLocation,
 };
 
