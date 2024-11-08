@@ -13,7 +13,7 @@ PCI device classes, subclassses and interface functions are optionally exposed a
 PCI vendor and device ids are kept as `u16` and have to be manually interpreted or transformed into strings using other crates; the publicly available list of PCI vendors and devices is intentionally not included to contain the crate size (the complete list is large) and to avoid licensing issues (this crate being MIT+Apache dual licensed, the list being GPL+BSD dual licensed).
 
 ## Summary of provided features
-- Enumeration of devices using OS usermode APIs on Windows, Linux and macOS, with more platforms to be added. See the `PciInfo` type.
+- Enumeration of devices using OS usermode APIs on Windows, Linux, macOS, and FreeBSD, with more platforms to be added. See the `PciInfo` type.
 - Parsing of PCI headers starting from byte arrays of the PCI configuration space. See the `pci_headers` module.
 - Parsing of PCI device classes, subclasses and interface-functions from their codes. See the `pci_enums` module.
 

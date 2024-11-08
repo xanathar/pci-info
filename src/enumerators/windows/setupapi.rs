@@ -154,7 +154,7 @@ pub(super) fn enumerate_pci() -> Result<PciInfo, PciInfoError> {
         let device_info_set = setupapi::SetupDiGetClassDevsW(
             Some(&GUID_DEVCLASS_SYSTEM as *const GUID),
             PCWSTR(ptr::null()),
-            HWND(0),
+            HWND(ptr::null_mut()),
             setupapi::SETUP_DI_GET_CLASS_DEVS_FLAGS(
                 setupapi::DIGCF_PRESENT.0 | setupapi::DIGCF_ALLCLASSES.0,
             ),
