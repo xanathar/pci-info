@@ -119,6 +119,7 @@
 //! `pci_class_debug_strings` | YES | Includes human readable debug strings for variants of [`pci_enums::PciDeviceClass`]. Disable to reduce the binary size.
 //! `pci_subclass_debug_strings` | YES | Includes human readable debug strings for variants of [`pci_enums::PciDeviceSubclass`]. Disable to reduce the binary size.
 //! `pci_interface_func_debug_string` | YES | Includes human readable debug strings for variants of [`pci_enums::PciDeviceInterfaceFunc`]. Disable to reduce the binary size.
+//! `enum_win32_wmi` | NO | Include the `WindowsWmiPciEnumerator` enumerator to the supported enumerators when running on Windows.
 //!
 
 #[macro_use]

@@ -154,12 +154,13 @@ LinuxProcFsPciEnumerator(SkipNoncommonHeaders) | Linux   | ✅ | ✅<sup>2</sup>
 LinuxProcFsPciEnumerator(Exhaustive)           | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ✅ | ✅ | ✅
 MacOsIoKitPciEnumerator<sup>3</sup>            | macOS   | ✅ | ⚠️<sup>1, 2</sup> | ✅ | ✅ | ✅ | ❌ | ❌
 WindowsSetupApiPciEnumerator                   | Windows | ✅ | ⚠️<sup>1, 2</sup> | ✅ | ✅ | ✅ | ❌ | ❌
-WindowsWmiPciEnumerator                        | Windows | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌
+WindowsWmiPciEnumerator<sup>4</sup>            | Windows | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌
 
 Notes:
 - (1) = The PCI location on this enumerator is parsed from human readable strings; that parsing might fail or the information might be incorrect.
 - (2) = The PCI location on this enumerator might not support multiple PCI segments/domains correctly.
 - (3) = Apparently most of the devices in Apple silicon Macs are not PCI/PCIe. As such PCI enumeration on Apple silicon computers return quite a short list.
+- (4) = Usage of the `WindowsWmiPciEnumerator` requires enabling the optional `enum_win32_wmi` feature.
 
 # Features
 
@@ -170,17 +171,23 @@ Crate feature | Default | Description
 `pci_class_debug_strings` | YES | Includes human readable debug strings for variants of `pci_enums::PciDeviceClass`. Disable to reduce the binary size.
 `pci_subclass_debug_strings` | YES | Includes human readable debug strings for variants of `pci_enums::PciDeviceSubclass`. Disable to reduce the binary size.
 `pci_interface_func_debug_string` | YES | Includes human readable debug strings for variants of `pci_enums::PciDeviceInterfaceFunc`. Disable to reduce the binary size.
+`enum_win32_wmi` | NO | Include the `WindowsWmiPciEnumerator` enumerator to the supported enumerators when running on Windows.
 
 # Change log
 
+### 0.3.0
+- Gated `WindowsWmiPciEnumerator` behind the `enum_win32_wmi` feature to help reduce dependencies when building on Windows
+- Updated `windows` crate dependency to version `0.58`
+- Updated other dependencies to their latest versions
+
 ### 0.2.1
-Fixed a few minor warnings and clippys.
+- Fixed a few minor warnings and clippys.
 
 ### 0.2.0
-Added support for FreeBSD.
+- Added support for FreeBSD.
 
 ### 0.1.0
-First version published with basic enumerators for Linux, Windows and MacOS.
+- First version published with basic enumerators for Linux, Windows and MacOS.
 
 ### Not yet released
 - Added PCI enumerator for FreeBSD

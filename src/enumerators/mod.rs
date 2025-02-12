@@ -13,12 +13,13 @@
 //! [`LinuxProcFsPciEnumerator::Exhaustive`]           | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ✅ | ✅ | ✅
 //! [`MacOsIoKitPciEnumerator`]<sup>3</sup>            | macOS   | ✅ | ⚠️<sup>1, 2</sup> | ✅ | ✅ | ✅ | ❌ | ❌
 //! [`WindowsSetupApiPciEnumerator`]                   | Windows | ✅ | ⚠️<sup>1, 2</sup> | ✅ | ✅ | ✅ | ❌ | ❌
-//! [`WindowsWmiPciEnumerator`]                        | Windows | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌
+//! [`WindowsWmiPciEnumerator`]<sup>4</sup>            | Windows | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌
 //!
 //! Notes:
 //! - (1) = The PCI location on this enumerator is parsed from human readable strings; that parsing might fail or the information might be incorrect.
 //! - (2) = The PCI location on this enumerator might not support multiple PCI segments/domains correctly.
 //! - (3) = Apparently most of the devices in Apple silicon Macs are not PCI/PCIe. As such PCI enumeration on Apple silicon computers return quite a short list.
+//! - (4) = Usage of the `WindowsWmiPciEnumerator` requires enabling the optional `enum_win32_wmi` feature.
 
 use crate::{pci_info::PciInfo, PciInfoError};
 

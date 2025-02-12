@@ -21,8 +21,10 @@ impl PciEnumerator for WindowsSetupApiPciEnumerator {
 
 /// A PCI Enumerator for Windows that uses
 /// [WMI](https://learn.microsoft.com/en-us/windows/win32/wmisdk/wmi-start-page)
-/// to enumerate devices.
+/// to enumerate devices. Requires the `enum_win32_wmi` feature to be enabled.
+#[cfg(any(feature = "enum_win32_wmi", doc))]
 pub struct WindowsWmiPciEnumerator;
+#[cfg(any(feature = "enum_win32_wmi", doc))]
 impl PciEnumerator for WindowsWmiPciEnumerator {
     fn enumerate_pci(self) -> Result<PciInfo, PciInfoError> {
         #[cfg(target_os = "windows")]

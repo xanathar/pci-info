@@ -136,7 +136,7 @@ impl From<windows::core::Error> for PciInfoError {
     }
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "enum_win32_wmi"))]
 impl From<wmi::WMIError> for PciInfoError {
     fn from(err: wmi::WMIError) -> Self {
         Self::WMIError(format!("{}", err).into())

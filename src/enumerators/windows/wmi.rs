@@ -1,3 +1,5 @@
+#![cfg(feature = "enum_win32_wmi")]
+
 use std::collections::HashMap;
 use wmi::Variant;
 use wmi::*;
