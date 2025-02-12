@@ -45,8 +45,8 @@ echo "Checking native target"
 echo "======================================"
 
 # Local target first
-cargo check  || die "Native target failed cargo check."
-cargo clippy || die "Native target failed cargo clippy."
+cargo check --all-features  || die "Native target failed cargo check."
+cargo clippy --all-features || die "Native target failed cargo clippy --all-features."
 
 # Target list can be found in https://doc.rust-lang.org/rustc/platform-support.html
 #
@@ -59,8 +59,8 @@ do
     echo "Checking $TARGET"
     echo "======================================"
 
-    cargo check --target "$TARGET"  || die "Target $TARGET failed cargo check."
-    cargo clippy --target "$TARGET" || die "Target $TARGET failed cargo clippy."
+    cargo check --all-features --target "$TARGET"  || die "Target $TARGET failed cargo check."
+    cargo clippy --all-features --target "$TARGET" || die "Target $TARGET failed cargo clippy --all-features."
 done
 
 echo "======================================"

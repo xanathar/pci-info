@@ -1,6 +1,6 @@
 [package]
 name = "pci-info"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 rust-version = "1.70"
 license = "MIT OR Apache-2.0"
@@ -23,7 +23,7 @@ libc = "0.2"
 core-foundation = "0.10"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-wmi = "0.14"
+wmi = { version = "0.15", optional = true }
 windows = { version = "0.58", features = [
     "Win32_Devices_DeviceAndDriverInstallation",
     "Win32_System",
@@ -35,3 +35,5 @@ pci_class_debug_strings = []
 pci_subclass_debug_strings = []
 pci_interface_func_debug_strings = []
 default = ["pci_class_debug_strings", "pci_subclass_debug_strings", "pci_interface_func_debug_strings"]
+enum_win32_wmi = ["dep:wmi"]
+
