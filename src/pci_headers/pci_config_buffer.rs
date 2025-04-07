@@ -1,3 +1,5 @@
+#![allow(clippy::precedence)]
+
 use crate::PciInfoError;
 
 pub(super) struct PciConfigBuffer<'a> {
