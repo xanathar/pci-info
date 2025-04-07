@@ -175,6 +175,9 @@ Crate feature | Default | Description
 
 # Change log
 
+### 0.3.1
+- Fixed really minor issue of device enumeration on MacOS that used the wrong data type for some IOKit properties, presumably making the code work only on little-endian machines (which kind of makes it irrelevant as all MacOS machines since 2006 are little-endian, but, anyway, it's better now).
+
 ### 0.3.0
 - Gated `WindowsWmiPciEnumerator` behind the `enum_win32_wmi` feature to help reduce dependencies when building on Windows
 - Updated `windows` crate dependency to version `0.58`
