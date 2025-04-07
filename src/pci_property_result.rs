@@ -22,6 +22,21 @@ impl<T> PropertyResult<T> {
         }
     }
 
+    pub fn set_res_cast<U: Copy + TryInto<T> + std::fmt::Display>(
+        &mut self,
+        res: Result<U, PciInfoError>,
+    ) {
+        let v = res.and_then(|v| {
+            v.try_into().map_err(|_| {
+                PciInfoError::ParseError(
+                    format!("Value {v} cannot fit into a {}", std::any::type_name::<T>()).into(),
+                )
+            })
+        });
+
+        self.set_res(v)
+    }
+
     pub fn set_res(&mut self, res: Result<T, PciInfoError>) {
         match res {
             Ok(v) => self.set_val(v),

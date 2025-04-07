@@ -51,9 +51,22 @@ unsafe fn get_property<T: Copy + Default>(
 
     if !property_data.is_null() {
         let mut value: T = T::default();
+        let size_of_t = std::mem::size_of::<T>() as isize;
+
+        // We test for coherence in IOKit property sizes only in test to
+        // avoid runtime panics. These are tested though.
+        #[cfg(test)]
+        {
+            let property_len = core_foundation::data::CFDataGetLength(property_data);
+            assert_eq!(
+                property_len, size_of_t,
+                "{key} size mismatch: property = {property_len}, type = {size_of_t}"
+            );
+        }
+
         CFDataGetBytes(
             property_data,
-            CFRange::init(0, std::mem::size_of::<T>() as isize),
+            CFRange::init(0, size_of_t),
             &mut value as *mut T as *mut _,
         );
         Ok(value)
@@ -84,16 +97,20 @@ unsafe fn enrich_and_append_device(
     properties: *mut core_foundation::dictionary::__CFDictionary,
 ) {
     // subsystem ids are known to fail, we consider them valid
-    dev.properties
-        .subsystem_vendor_id
-        .set_val(get_property::<u16>(properties, "subsystem-vendor-id").ok());
-    dev.properties
-        .subsystem_device_id
-        .set_val(get_property::<u16>(properties, "subsystem-id").ok());
+    dev.properties.subsystem_vendor_id.set_val(
+        get_property::<u32>(properties, "subsystem-vendor-id")
+            .ok()
+            .and_then(|v| v.try_into().ok()),
+    );
+    dev.properties.subsystem_device_id.set_val(
+        get_property::<u32>(properties, "subsystem-id")
+            .ok()
+            .and_then(|v| v.try_into().ok()),
+    );
 
     dev.properties
         .revision
-        .set_res(get_property::<u8>(properties, "revision-id"));
+        .set_res_cast(get_property::<u32>(properties, "revision-id"));
 
     match get_property::<u32>(properties, "class-code") {
         Ok(class_triplet) => {
@@ -113,8 +130,8 @@ unsafe fn enrich_and_append_device(
 }
 
 unsafe fn create_device(properties: CFMutableDictionaryRef) -> Result<PciDevice, PciInfoError> {
-    let vendor_id = get_property::<u16>(properties, "vendor-id")?;
-    let device_id = get_property::<u16>(properties, "device-id")?;
+    let vendor_id = get_property::<u32>(properties, "vendor-id")? as u16;
+    let device_id = get_property::<u32>(properties, "device-id")? as u16;
 
     Ok(PciDevice::new(
         vendor_id,
