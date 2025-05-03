@@ -12,7 +12,7 @@ macro_rules! test_enumerator {
                     let res = enumerator.enumerate_pci().unwrap();
 
                     for r in res.iter() {
-                        assert!(r.is_ok());
+                        r.unwrap();
                     }
                 }
             }

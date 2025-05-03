@@ -1,5 +1,6 @@
 use std::fs;
 use std::io::{self, BufRead, Read};
+use std::path::PathBuf;
 
 use crate::pci_device::PciDeviceProperties;
 use crate::pci_headers::{PciCommonHeader, PciSpecializedHeader};
@@ -22,13 +23,13 @@ fn read_bus_directory(
         return Ok(());
     }
 
-    let bus_id = parse_bus_id(bus_dir.file_name())?;
+    let bus_num = parse_bus_number(bus_dir.file_name())?;
     let devices_files = fs::read_dir(bus_dir.path())?;
 
     for device_file in devices_files {
-        if let Err(e) = read_pci_header_file(device_file, bus_id, pi, read_extended_headers) {
+        if let Err(e) = read_pci_header_file(device_file, bus_num, pi, read_extended_headers) {
             pi.push_error(PciDeviceEnumerationError::new_at_bus(
-                PciBusNumber::new(bus_id),
+                bus_num,
                 PciDeviceEnumerationErrorImpact::Device,
                 e,
             ));
@@ -40,7 +41,7 @@ fn read_bus_directory(
 
 fn read_pci_header_file(
     device_file: Result<fs::DirEntry, std::io::Error>,
-    bus_id: u8,
+    bus_num: PciBusNumber,
     pi: &mut PciInfo,
     read_extended_headers: bool,
 ) -> Result<(), PciInfoError> {
@@ -52,7 +53,7 @@ fn read_pci_header_file(
 
     let (slot, func) = parse_slot_and_func(device_file.file_name())?;
 
-    let location = PciLocation::with_bdf(bus_id, slot, func);
+    let location = PciLocation::with_segment(bus_num.segment(), bus_num.bus(), slot, func);
 
     let mut buffer = [0; PciCommonHeader::MAX_HEADER_LEN];
     let mut f = fs::File::open(device_file.path())?;
@@ -125,13 +126,52 @@ fn parse_slot_and_func(filename: std::ffi::OsString) -> Result<(u8, u8), PciInfo
     Ok((slot, func))
 }
 
-fn parse_bus_id(filename: std::ffi::OsString) -> Result<u8, PciInfoError> {
+fn mask_format(filename: &[u8]) -> String {
+    let mut res = String::with_capacity(filename.len());
+
+    for c in filename.iter() {
+        res.push(match c {
+            b':' => ':',
+            c if *c >= b'0' && *c <= b'9' => 'h',
+            c if *c >= b'a' && *c <= b'f' => 'h',
+            c if *c >= b'A' && *c <= b'F' => 'h',
+            _ => '?',
+        });
+    }
+
+    res
+}
+
+fn parse_bus_number(filename: std::ffi::OsString) -> Result<PciBusNumber, PciInfoError> {
     let Some(bus_str) = filename.to_str() else {
         return Err(PciInfoError::ParseError("bus id has invalid code".into()));
     };
 
-    u8::from_str_radix(bus_str, 16)
-        .map_err(|_| PciInfoError::ParseError(format!("bus id is invalid hex: '{bus_str}'").into()))
+    let (segment, bus) = match mask_format(bus_str.as_bytes()).as_str() {
+        "h" | "hh" => {
+            let bus = u8::from_str_radix(bus_str, 16).map_err(|_| {
+                PciInfoError::ParseError(format!("bus id is invalid hex: '{bus_str}'").into())
+            })?;
+            (0, bus)
+        }
+        "hhhh:hh" => {
+            let bus = u8::from_str_radix(&bus_str[5..], 16).map_err(|_| {
+                PciInfoError::ParseError(format!("bus id is invalid hex: '{bus_str}'").into())
+            })?;
+            let seg = u16::from_str_radix(&bus_str[0..4], 16).map_err(|_| {
+                PciInfoError::ParseError(format!("segment id is invalid hex: '{bus_str}'").into())
+            })?;
+
+            (seg, bus)
+        }
+        fmt => {
+            return Err(PciInfoError::ParseError(
+                format!("bus id is invalid format '{fmt}'; value is '{bus_str}'").into(),
+            ))
+        }
+    };
+
+    Ok(PciBusNumber::with_segment(segment, bus))
 }
 
 struct DeviceFileEntry {
@@ -183,8 +223,12 @@ impl DeviceFileEntry {
     }
 }
 
-fn parse_device_file() -> Result<Vec<Result<DeviceFileEntry, PciInfoError>>, PciInfoError> {
-    let file = fs::File::open("/proc/bus/pci/devices")?;
+fn parse_device_file(
+    mut path: PathBuf,
+) -> Result<Vec<Result<DeviceFileEntry, PciInfoError>>, PciInfoError> {
+    path.push("devices");
+
+    let file = fs::File::open(path)?;
     let lines = io::BufReader::new(file).lines();
 
     let mut entries = Vec::new();
@@ -200,15 +244,18 @@ fn parse_device_file() -> Result<Vec<Result<DeviceFileEntry, PciInfoError>>, Pci
 }
 
 pub(super) fn enumerate_pci(
+    mut path: PathBuf,
     read_headers: bool,
     read_extended_headers: bool,
     read_device_file: bool,
 ) -> Result<PciInfo, PciInfoError> {
+    path.push("pci");
+
     let mut pi = PciInfo::empty();
-    let bus_directories = fs::read_dir("/proc/bus/pci")?;
+    let bus_directories = fs::read_dir(&path)?;
 
     let dev_file_entries = if read_device_file {
-        parse_device_file()
+        parse_device_file(path)
     } else {
         Ok(Vec::new())
     };

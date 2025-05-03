@@ -7,10 +7,10 @@
 //! Enumerator                                     | Platforms | PCI id | PCI location | Revision | Device class | PCI subsystem | Assigned IRQ | OS driver
 //! ---------------------------------------------- | --------- | ------ | ------------ | -------- | ------------ | ----------------- | ------------ | ----------
 //! [`FreeBsdDevPciEnumerator`]                        | FreeBSD | ✅ | ✅             | ✅ | ✅ | ✅ | ❌ | ✅
-//! [`LinuxProcFsPciEnumerator::Fastest`]              | Linux   | ✅ | ✅<sup>2</sup> | ❌ | ❌ | ❌ | ✅ | ✅
-//! [`LinuxProcFsPciEnumerator::HeadersOnly`]          | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ✅ | ❌ | ❌
-//! [`LinuxProcFsPciEnumerator::SkipNoncommonHeaders`] | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ❌ | ✅ | ✅
-//! [`LinuxProcFsPciEnumerator::Exhaustive`]           | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ✅ | ✅ | ✅
+//! [`LinuxProcFsPciEnumerator::Fastest`]<sup>5</sup>              | Linux   | ✅ | ✅<sup>2</sup> | ❌ | ❌ | ❌ | ✅ | ✅
+//! [`LinuxProcFsPciEnumerator::HeadersOnly`]<sup>5</sup>          | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ✅ | ❌ | ❌
+//! [`LinuxProcFsPciEnumerator::SkipNoncommonHeaders`]<sup>5</sup> | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ❌ | ✅ | ✅
+//! [`LinuxProcFsPciEnumerator::Exhaustive`]<sup>5</sup>           | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ✅ | ✅ | ✅
 //! [`MacOsIoKitPciEnumerator`]<sup>3</sup>            | macOS   | ✅ | ⚠️<sup>1, 2</sup> | ✅ | ✅ | ✅ | ❌ | ❌
 //! [`WindowsSetupApiPciEnumerator`]                   | Windows | ✅ | ⚠️<sup>1, 2</sup> | ✅ | ✅ | ✅ | ❌ | ❌
 //! [`WindowsWmiPciEnumerator`]<sup>4</sup>            | Windows | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌
@@ -20,6 +20,7 @@
 //! - (2) = The PCI location on this enumerator might not support multiple PCI segments/domains correctly.
 //! - (3) = Apparently most of the devices in Apple silicon Macs are not PCI/PCIe. As such PCI enumeration on Apple silicon computers return quite a short list.
 //! - (4) = Usage of the `WindowsWmiPciEnumerator` requires enabling the optional `enum_win32_wmi` feature.
+//! - (5) = This enumerator can also run on a copy of the `proc` file system to perform offline enumeration for tests or forensics.
 
 use crate::{pci_info::PciInfo, PciInfoError};
 

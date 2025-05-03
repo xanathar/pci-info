@@ -148,10 +148,10 @@ Properties provided for PCI devices varies among enumerators.
 Enumerator                                     | Platforms | PCI id | PCI location | Revision | Device class | PCI subsystem | Assigned IRQ | OS driver
 ---------------------------------------------- | --------- | ------ | ------------ | -------- | ------------ | ----------------- | ------------ | ----------
 FreeBsdDevPciEnumerator                        | FreeBSD | ✅ | ✅             | ✅ | ✅ | ✅ | ❌ | ✅
-LinuxProcFsPciEnumerator(Fastest)              | Linux   | ✅ | ✅<sup>2</sup> | ❌ | ❌ | ❌ | ✅ | ✅
-LinuxProcFsPciEnumerator(HeadersOnly)          | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ✅ | ❌ | ❌
-LinuxProcFsPciEnumerator(SkipNoncommonHeaders) | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ❌ | ✅ | ✅
-LinuxProcFsPciEnumerator(Exhaustive)           | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ✅ | ✅ | ✅
+LinuxProcFsPciEnumerator(Fastest)<sup>5</sup>              | Linux   | ✅ | ✅<sup>2</sup> | ❌ | ❌ | ❌ | ✅ | ✅
+LinuxProcFsPciEnumerator(HeadersOnly)<sup>5</sup>          | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ✅ | ❌ | ❌
+LinuxProcFsPciEnumerator(SkipNoncommonHeaders)<sup>5</sup> | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ❌ | ✅ | ✅
+LinuxProcFsPciEnumerator(Exhaustive)<sup>5</sup>           | Linux   | ✅ | ✅<sup>2</sup> | ✅ | ✅ | ✅ | ✅ | ✅
 MacOsIoKitPciEnumerator<sup>3</sup>            | macOS   | ✅ | ⚠️<sup>1, 2</sup> | ✅ | ✅ | ✅ | ❌ | ❌
 WindowsSetupApiPciEnumerator                   | Windows | ✅ | ⚠️<sup>1, 2</sup> | ✅ | ✅ | ✅ | ❌ | ❌
 WindowsWmiPciEnumerator<sup>4</sup>            | Windows | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌
@@ -161,6 +161,7 @@ Notes:
 - (2) = The PCI location on this enumerator might not support multiple PCI segments/domains correctly.
 - (3) = Apparently most of the devices in Apple silicon Macs are not PCI/PCIe. As such PCI enumeration on Apple silicon computers return quite a short list.
 - (4) = Usage of the `WindowsWmiPciEnumerator` requires enabling the optional `enum_win32_wmi` feature.
+- (5) = This enumerator can also run on a copy of the `proc` file system to perform offline enumeration for tests or forensics.
 
 # Features
 
@@ -174,6 +175,10 @@ Crate feature | Default | Description
 `enum_win32_wmi` | NO | Include the `WindowsWmiPciEnumerator` enumerator to the supported enumerators when running on Windows.
 
 # Change log
+
+### 0.3.2
+- Added ability to read Linux PCI configuration from a directory that is a copy of `/proc/bus/pci` for test and/or forensic purposes
+- Fixed compatibility with PCI devices enumeration on aarch64 targets (Solves [Issue#13](https://github.com/xanathar/pci-info/issues/13))
 
 ### 0.3.1
 - Fixed really minor issue of device enumeration on MacOS that used the wrong data type for some IOKit properties, presumably making the code work only on little-endian machines (which kind of makes it irrelevant as all MacOS machines since 2006 are little-endian, but, anyway, it's better now).
