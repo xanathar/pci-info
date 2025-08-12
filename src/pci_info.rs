@@ -66,7 +66,7 @@ impl PciInfo {
     }
 
     /// Returns an iterator to the results references
-    pub fn iter(&self) -> PciInfoRefIterator {
+    pub fn iter(&self) -> PciInfoRefIterator<'_> {
         PciInfoRefIterator {
             pci_info: self,
             index: 0,
