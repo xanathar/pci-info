@@ -32,5 +32,6 @@ impl PciEnumerator for WindowsWmiPciEnumerator {
     }
 }
 
+#[cfg(feature = "enum_win32_wmi")]
 test_enumerator!(WindowsWmiPciEnumerator, WindowsWmiPciEnumerator);
 test_enumerator!(WindowsSetupApiPciEnumerator, WindowsSetupApiPciEnumerator);
