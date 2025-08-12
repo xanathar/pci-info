@@ -108,26 +108,26 @@ trait FormattablePropertyResult {
 
 impl FormattablePropertyResult for PciLocation {
     fn format_property(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 
 impl FormattablePropertyResult for u16 {
     fn format_property(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:04X}", self)
+        write!(f, "{self:04X}")
     }
 }
 
 impl FormattablePropertyResult for u8 {
     fn format_property(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:02X}", self)
+        write!(f, "{self:02X}")
     }
 }
 
 impl FormattablePropertyResult for Option<u16> {
     fn format_property(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Some(v) => write!(f, "{:04X}", v),
+            Some(v) => write!(f, "{v:04X}"),
             None => write!(f, "none"),
         }
     }

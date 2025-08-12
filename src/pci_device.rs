@@ -280,11 +280,11 @@ impl fmt::Debug for PciDevice {
         )?;
 
         if let Ok(v) = self.os_irq() {
-            write!(f, " os_irq: {:?}", v)?;
+            write!(f, " os_irq: {v:?}")?;
         }
 
         if let Ok(v) = self.os_driver() {
-            write!(f, " os_driver: '{:?}'", v)?;
+            write!(f, " os_driver: '{v:?}'")?;
         }
 
         write!(f, "]")

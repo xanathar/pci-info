@@ -46,8 +46,8 @@ impl Display for PciDeviceEnumerationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let at: PciInfoErrorString = match self.location {
             PciDeviceEnumerationErrorLocation::None => "".into(),
-            PciDeviceEnumerationErrorLocation::Bus(l) => format!(" at {:?} ", l).into(),
-            PciDeviceEnumerationErrorLocation::Device(l) => format!(" at {:?} ", l).into(),
+            PciDeviceEnumerationErrorLocation::Bus(l) => format!(" at {l:?} ").into(),
+            PciDeviceEnumerationErrorLocation::Device(l) => format!(" at {l:?} ").into(),
         };
 
         match self.impact {
