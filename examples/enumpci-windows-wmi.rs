@@ -20,8 +20,6 @@ pub fn main() -> Result<(), PciInfoError> {
     Ok(())
 }
 
-
-
 #[cfg(not(all(target_os = "windows", feature = "enum_win32_wmi")))]
 pub fn main() {
     eprintln!("This example needs Windows to run, and the enum_win32_wmi feature.");
