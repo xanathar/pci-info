@@ -176,6 +176,9 @@ Crate feature | Default | Description
 
 # Change log
 
+### 0.3.3
+- Fixed test files names to be compatible with Windows file system rules
+
 ### 0.3.2
 - Added ability to read Linux PCI configuration from a directory that is a copy of `/proc/bus/pci` for test and/or forensic purposes
 - Fixed compatibility with PCI devices enumeration on aarch64 targets (Solves [Issue#13](https://github.com/xanathar/pci-info/issues/13))

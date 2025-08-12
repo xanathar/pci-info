@@ -132,6 +132,8 @@ fn mask_format(filename: &[u8]) -> String {
     for c in filename.iter() {
         res.push(match c {
             b':' => ':',
+            #[cfg(test)]
+            b'$' => ':', // we use a placeholder char otherwise Windows cannot checkout the repository
             c if *c >= b'0' && *c <= b'9' => 'h',
             c if *c >= b'a' && *c <= b'f' => 'h',
             c if *c >= b'A' && *c <= b'F' => 'h',
