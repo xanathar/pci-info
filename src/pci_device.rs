@@ -247,7 +247,7 @@ impl PciDevice {
 impl fmt::Debug for PciDevice {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "[")?;
-        write!(f, " {:?}", &self.properties.location)?;
+        write!(f, " {:?}", self.properties.location)?;
         write!(f, " vendor: {:04X}", self.vendor_id)?;
         write!(f, " device: {:04X}", self.device_id)?;
         write!(f, " revision: {:?}", self.properties.revision)?;

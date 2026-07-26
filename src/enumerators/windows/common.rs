@@ -4,17 +4,13 @@ use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
 
+#[derive(Default)]
 pub(super) enum ConflictOption<T: Copy + Hash + Eq + PartialEq + Debug> {
+    #[default]
     Empty,
     Value(T),
     Error(PciInfoError),
     Conflict(HashSet<T>),
-}
-
-impl<T: Copy + Hash + Eq + PartialEq + Debug> Default for ConflictOption<T> {
-    fn default() -> Self {
-        Self::Empty
-    }
 }
 
 impl<T: Copy + Hash + Eq + PartialEq + Debug> ConflictOption<T> {
