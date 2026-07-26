@@ -176,6 +176,11 @@ Crate feature | Default | Description
 
 # Change log
 
+### 0.4.0
+- Fixed #14 (capabilities offset wrong, thanks meithecatte@)
+- Fixed some clippy warnings
+- Raised version to accomodate potential breaking changes, just in case
+
 ### 0.3.3
 - Fixed test files names to be compatible with Windows file system rules
 
